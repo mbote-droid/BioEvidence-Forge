@@ -52,3 +52,12 @@ class TestStorage:
         item = Publication.from_mapping({"identifier": "2", "authors": ["Ada"]})
         store.upsert((item,))
         assert store.recent()[0].authors == ("Ada",)
+
+    def test_directory_database_fails_initialization_safely(self, tmp_path):
+        assert "failed" in PublicationStore(tmp_path).initialize().message.lower()
+
+    def test_directory_database_fails_upsert_safely(self, tmp_path):
+        assert PublicationStore(tmp_path).upsert((record(),)).count == 0
+
+    def test_directory_database_fails_read_safely(self, tmp_path):
+        assert PublicationStore(tmp_path).recent() == ()

@@ -12,6 +12,11 @@ class Source:
         return self.result
 
 
+class BrokenSource:
+    def search(self, topic):
+        raise RuntimeError("source unavailable")
+
+
 DEFAULT_RESULT = SearchResult((), "x", "Collected 0 record(s).")
 
 
@@ -51,3 +56,11 @@ class TestPipeline:
 
     def test_report_path_is_local(self, tmp_path):
         assert pipeline(tmp_path).run("topic").report.path.parent.name == "reports"
+
+    def test_source_failure_is_safe(self, tmp_path):
+        value = ResearchPipeline(
+            BrokenSource(),
+            PublicationStore(tmp_path / "data.db"),
+            ReportWriter(tmp_path / "reports"),
+        ).run("topic")
+        assert "failed safely" in value.message

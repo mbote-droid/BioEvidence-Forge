@@ -25,3 +25,12 @@ pytest
 See [HOW_IT_WORKS.md](HOW_IT_WORKS.md) for the runtime flow and [docs/OPERATIONS.md](docs/OPERATIONS.md)
 for scheduled operation.
 
+## Continuous operation
+
+Copy `.env.example` to `.env`, set your public-source contact email and research topic,
+then run `docker compose up --build -d`. The collector runs on its configured schedule,
+while the review service is available at `http://127.0.0.1:8080`.
+
+The repository includes verification workflows for every push and pull request. Creating
+a version tag publishes the verified container to the repository owner's GitHub Container
+Registry namespace.

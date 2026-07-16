@@ -34,7 +34,7 @@ packages = ["src/bioevidence"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "--strict-markers --cov=bioevidence --cov-report=term-missing --cov-fail-under=90"
+addopts = "--strict-markers --cov=bioevidence --cov-report=term-missing --cov-fail-under=95"
 
 [tool.coverage.run]
 branch = true

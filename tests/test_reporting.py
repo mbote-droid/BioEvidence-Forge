@@ -50,3 +50,8 @@ class TestReporting:
 
     def test_topic_is_escaped(self, tmp_path):
         assert "&lt;x&gt;" in ReportWriter(tmp_path).write("<x>", ()).path.read_text()
+
+    def test_unwritable_target_is_safe(self, tmp_path):
+        target = tmp_path / "not-a-directory"
+        target.write_text("x")
+        assert ReportWriter(target).write("topic", ()).path is None

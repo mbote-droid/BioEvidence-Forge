@@ -40,6 +40,9 @@ class TestScoring:
     def test_invalid_year_is_not_recent(self):
         assert not _is_recent("unknown")
 
+    def test_none_year_is_not_recent(self):
+        assert not _is_recent(None)
+
     def test_none_interests_are_safe(self):
         assert score_publication(publication(), None).value >= 20
 
