@@ -10,10 +10,15 @@ from bioevidence.storage import PublicationStore, StorageResult
 class Workflow:
     def __init__(self):
         self.topics = []
+        self.closed = False
 
     def run(self, topic):
         self.topics.append(topic)
         return RunResult(topic, 0, StorageResult(0, "x"), ReportResult(None, 0, "x"), "completed")
+
+    def close(self):
+        self.closed = True
+        return True
 
 
 def client(tmp_path):
@@ -60,3 +65,9 @@ class TestApi:
 
     def test_publications_accepts_limit(self, tmp_path):
         assert client(tmp_path)[0].get("/publications?limit=1").status_code == 200
+
+    def test_lifespan_closes_workflow(self, tmp_path):
+        value, workflow = client(tmp_path)
+        with value:
+            assert not workflow.closed
+        assert workflow.closed

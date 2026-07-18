@@ -58,6 +58,11 @@ class ResearchPipeline:
                 "Pipeline failed safely; inspect service logs before retrying.",
             )
 
+    def close(self) -> bool:
+        """Release a source resource when that connector owns one."""
+        closer = getattr(self._source, "close", None)
+        return bool(closer()) if callable(closer) else False
+
     @staticmethod
     def _score(records, interests: tuple[str, ...]) -> tuple[tuple[object, Score], ...]:
         scored = tuple((record, score_publication(record, interests)) for record in records)

@@ -68,5 +68,11 @@ class ReportWriter:
             f"- Priority score: {score.value}/100\n"
             f"- Review factors: {factors}\n"
             f"- Citation: {publication.citation}\n"
-            f"- Abstract: {publication.abstract}\n"
+            f"- Abstract: {ReportWriter._abstract_snippet(publication.abstract)}\n"
         )
+
+    @staticmethod
+    def _abstract_snippet(abstract: str, limit: int = 2_000) -> str:
+        """Bound a pre-sanitized abstract without producing an empty report field."""
+        bounded_limit = max(1, limit)
+        return abstract[:bounded_limit] + ("..." if len(abstract) > bounded_limit else "")

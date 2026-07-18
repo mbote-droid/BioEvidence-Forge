@@ -21,6 +21,9 @@ class TestConfig:
             == "a@b.test"
         )
 
+    def test_reads_ncbi_api_key(self):
+        assert Settings.from_mapping({"BIOEVIDENCE_NCBI_API_KEY": "key"}).ncbi_api_key == "key"
+
     def test_reads_timeout(self):
         assert (
             Settings.from_mapping(

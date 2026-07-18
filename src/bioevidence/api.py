@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
@@ -30,13 +32,22 @@ def create_app(
     workflow = pipeline or ResearchPipeline(
         PubMedClient(
             contact_email=runtime.contact_email,
+            api_key=runtime.ncbi_api_key,
             timeout_seconds=runtime.request_timeout_seconds,
             max_results=runtime.max_results,
         ),
         archive,
         ReportWriter(runtime.reports_path),
     )
-    application = FastAPI(title="BioEvidence Forge", version="0.1.0")
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        yield
+        closer = getattr(workflow, "close", None)
+        if callable(closer):
+            closer()
+
+    application = FastAPI(title="BioEvidence Forge", version="0.1.0", lifespan=lifespan)
 
     @application.get("/health")
     def health() -> dict[str, object]:

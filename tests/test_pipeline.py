@@ -17,6 +17,11 @@ class BrokenSource:
         raise RuntimeError("source unavailable")
 
 
+class CloseableSource(Source):
+    def close(self):
+        return True
+
+
 DEFAULT_RESULT = SearchResult((), "x", "Collected 0 record(s).")
 
 
@@ -64,3 +69,11 @@ class TestPipeline:
             ReportWriter(tmp_path / "reports"),
         ).run("topic")
         assert "failed safely" in value.message
+
+    def test_close_delegates_to_source(self, tmp_path):
+        value = ResearchPipeline(
+            CloseableSource(DEFAULT_RESULT),
+            PublicationStore(tmp_path / "a.db"),
+            ReportWriter(tmp_path),
+        )
+        assert value.close()

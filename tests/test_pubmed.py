@@ -1,3 +1,5 @@
+import xml.etree.ElementTree as element_tree
+
 import httpx
 
 from bioevidence.sources.pubmed import PubMedClient
@@ -9,15 +11,19 @@ ARTICLE_XML = (
     "</AbstractText></Abstract><AuthorList><Author><ForeName>Ada</ForeName>"
     "<LastName>Lovelace</LastName></Author></AuthorList><Journal><JournalIssue>"
     "<PubDate><Year>2026</Year></PubDate></JournalIssue></Journal></Article>"
-    "</MedlineCitation></PubmedArticle></PubmedArticleSet>"
+    "</MedlineCitation><PubmedData><ArticleIdList><ArticleId IdType='doi'>10.1/example</ArticleId>"
+    "<ArticleId IdType='pmc'>PMC123</ArticleId></ArticleIdList></PubmedData></PubmedArticle>"
+    "</PubmedArticleSet>"
 )
 
 
 class FakeResponse:
-    def __init__(self, json_data=None, text="", status_error=None):
+    def __init__(self, json_data=None, text="", status_error=None, status_code=200, headers=None):
         self._json_data = json_data
         self.text = text
         self.status_error = status_error
+        self.status_code = status_code
+        self.headers = headers or {}
 
     def json(self):
         return self._json_data
@@ -95,7 +101,9 @@ class TestPubMed:
     def test_http_error_is_safe(self):
         assert (
             "failed"
-            in PubMedClient(FakeClient([FakeResponse(status_error=httpx.HTTPError("x"))]))
+            in PubMedClient(
+                FakeClient([FakeResponse(status_error=httpx.HTTPError("x"))]), max_attempts=1
+            )
             .search("x")
             .message.lower()
         )
@@ -110,3 +118,66 @@ class TestPubMed:
 
     def test_max_results_is_bounded(self):
         assert PubMedClient(max_results=999)._max_results == 100
+
+    def test_esearch_requests_json(self):
+        client = FakeClient([FakeResponse({"esearchresult": {"idlist": []}})])
+        PubMedClient(client).search("x")
+        assert client.calls[0][1]["retmode"] == "json"
+
+    def test_api_key_is_added(self):
+        client = FakeClient([FakeResponse({"esearchresult": {"idlist": []}})])
+        PubMedClient(client, api_key="key").search("x")
+        assert client.calls[0][1]["api_key"] == "key"
+
+    def test_article_doi_is_extracted(self):
+        result = PubMedClient(
+            FakeClient([FakeResponse(SEARCH_PAYLOAD), FakeResponse(text=ARTICLE_XML)])
+        ).search("x")
+        assert result.records[0].doi == "10.1/example"
+
+    def test_article_pmc_identifier_is_extracted(self):
+        result = PubMedClient(
+            FakeClient([FakeResponse(SEARCH_PAYLOAD), FakeResponse(text=ARTICLE_XML)])
+        ).search("x")
+        assert result.records[0].pmc_id == "PMC123"
+
+    def test_transient_response_retries(self):
+        client = FakeClient(
+            [
+                FakeResponse(status_code=429, headers={"Retry-After": "2"}),
+                FakeResponse({"esearchresult": {"idlist": []}}),
+            ]
+        )
+        waits = []
+        PubMedClient(client, sleeper=waits.append, clock=lambda: 1.0).search("x")
+        assert len(client.calls) == 2 and 2.0 in waits
+
+    def test_owned_client_closes(self):
+        assert PubMedClient().close()
+
+    def test_injected_client_is_not_closed(self):
+        assert not PubMedClient(FakeClient([])).close()
+
+    def test_rate_slot_waits_between_requests(self):
+        client = FakeClient([FakeResponse({"esearchresult": {"idlist": []}})])
+        waits = []
+        source = PubMedClient(client, sleeper=waits.append, clock=lambda: 1.0)
+        source._wait_for_rate_slot()
+        source._wait_for_rate_slot()
+        assert waits == [0.34]
+
+    def test_retry_delay_falls_back_without_header(self):
+        source = PubMedClient(FakeClient([]), backoff_seconds=2)
+        assert source._retry_delay(FakeResponse(), 2) == 8
+
+    def test_collective_author_name_is_supported(self):
+        article = element_tree.fromstring(
+            "<Author><CollectiveName>Consortium</CollectiveName></Author>"
+        )
+        assert PubMedClient._author_name(article) == "Consortium"
+
+    def test_unknown_article_identifier_is_empty(self):
+        article = element_tree.fromstring(
+            "<Article><ArticleId IdType='pii'>x</ArticleId></Article>"
+        )
+        assert PubMedClient._article_identifier(article, "doi") == ""

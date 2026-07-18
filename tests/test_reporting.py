@@ -55,3 +55,6 @@ class TestReporting:
         target = tmp_path / "not-a-directory"
         target.write_text("x")
         assert ReportWriter(target).write("topic", ()).path is None
+
+    def test_abstract_snippet_is_bounded(self):
+        assert ReportWriter._abstract_snippet("abcdef", 3) == "abc..."
