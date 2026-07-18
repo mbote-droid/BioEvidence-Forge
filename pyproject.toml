@@ -35,6 +35,9 @@ packages = ["src/bioevidence"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "--strict-markers --cov=bioevidence --cov-report=term-missing --cov-fail-under=95"
+filterwarnings = [
+  "ignore:Using `httpx` with `starlette.testclient` is deprecated:starlette.exceptions.StarletteDeprecationWarning",
+]
 
 [tool.coverage.run]
 branch = true
