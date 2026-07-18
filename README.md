@@ -1,5 +1,13 @@
 # BioEvidence Forge
 
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)](https://www.python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/mbote-droid/BioEvidence-Forge/actions/workflows/ci.yml/badge.svg)](https://github.com/mbote-droid/BioEvidence-Forge/actions/workflows/ci.yml)
+[![Release](https://github.com/mbote-droid/BioEvidence-Forge/actions/workflows/release.yml/badge.svg)](https://github.com/mbote-droid/BioEvidence-Forge/actions/workflows/release.yml)
+[![Storage: SQLite](https://img.shields.io/badge/storage-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org)
+[![Offline-first](https://img.shields.io/badge/offline--first-no%20GPU-334155)](#design-commitments)
+
+
 BioEvidence Forge continuously collects open biomedical evidence, converts it into
 traceable local records, prioritizes material against configured research topics,
 and produces review-ready reports.
