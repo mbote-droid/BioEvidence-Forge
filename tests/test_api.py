@@ -1,4 +1,4 @@
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 
 from bioevidence.api import create_app
 from bioevidence.config import Settings
