@@ -181,3 +181,35 @@ class TestPubMed:
             "<Article><ArticleId IdType='pii'>x</ArticleId></Article>"
         )
         assert PubMedClient._article_identifier(article, "doi") == ""
+
+    def test_articles_without_pmid_are_skipped(self):
+        broken = (
+            "<PubmedArticle><MedlineCitation><Article><ArticleTitle>No id</ArticleTitle>"
+            "</Article></MedlineCitation></PubmedArticle>"
+        )
+        xml = ARTICLE_XML.replace("</PubmedArticleSet>", broken * 2 + "</PubmedArticleSet>")
+        client = FakeClient([FakeResponse(SEARCH_PAYLOAD), FakeResponse(text=xml)])
+        result = PubMedClient(client, contact_email="a@example.org").search("genomics")
+        assert [record.identifier for record in result.records] == ["123"]
+
+    def test_unexpected_search_payload_is_safe(self):
+        for payload in (
+            ["not", "a", "dict"],
+            {"esearchresult": []},
+            {"esearchresult": {"idlist": "123"}},
+        ):
+            client = FakeClient([FakeResponse(payload)])
+            result = PubMedClient(client, contact_email="a@example.org").search("genomics")
+            assert result.records == ()
+            assert "failed" in result.message
+
+    def test_entity_expansion_attack_is_rejected(self):
+        bomb = (
+            '<?xml version="1.0"?><!DOCTYPE lolz [<!ENTITY lol "lol">'
+            '<!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">]>'
+            "<PubmedArticleSet>&lol2;</PubmedArticleSet>"
+        )
+        client = FakeClient([FakeResponse(SEARCH_PAYLOAD), FakeResponse(text=bomb)])
+        result = PubMedClient(client, contact_email="a@example.org").search("genomics")
+        assert result.records == ()
+        assert "failed" in result.message

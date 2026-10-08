@@ -10,6 +10,8 @@ from typing import Protocol
 from urllib.parse import quote
 
 import httpx
+from defusedxml import ElementTree as safe_element_tree
+from defusedxml.common import DefusedXmlException
 from loguru import logger
 
 from bioevidence.models import Publication
@@ -71,7 +73,7 @@ class PubMedClient:
         try:
             identifiers = self._search_ids(normalized_query)
             records = self._fetch_records(identifiers, unique_terms(normalized_query.split()))
-        except (httpx.HTTPError, ValueError, element_tree.ParseError) as error:
+        except (httpx.HTTPError, ValueError, element_tree.ParseError, DefusedXmlException) as error:
             logger.warning("PubMed request failed: {}", type(error).__name__)
             return SearchResult((), normalized_query, "Collection failed; no records were stored.")
         message = (
@@ -101,7 +103,12 @@ class PubMedClient:
         )
         response.raise_for_status()
         payload = response.json()
-        raw_ids = payload.get("esearchresult", {}).get("idlist", [])
+        result = payload.get("esearchresult") if isinstance(payload, dict) else None
+        if not isinstance(result, dict):
+            raise ValueError("PubMed search response has an unexpected shape.")
+        raw_ids = result.get("idlist", [])
+        if not isinstance(raw_ids, list):
+            raise ValueError("PubMed search identifiers have an unexpected shape.")
         return tuple(str(item) for item in raw_ids if str(item).isdigit())[: self._max_results]
 
     def _fetch_records(
@@ -113,10 +120,17 @@ class PubMedClient:
         response = self._request(
             "efetch.fcgi", self._params({"db": "pubmed", "id": ids, "retmode": "xml"})
         )
-        root = element_tree.fromstring(response.text)
-        return tuple(
-            self._parse_article(article, topics) for article in root.findall(".//PubmedArticle")
+        root = safe_element_tree.fromstring(response.text)  # rejects entity-expansion attacks
+        articles = root.findall(".//PubmedArticle")
+        records = tuple(
+            self._parse_article(article, topics)
+            for article in articles
+            if self._text(article, ".//PMID").isdigit()
         )
+        skipped = len(articles) - len(records)
+        if skipped:
+            logger.warning("Skipped {} PubMed article(s) without a valid PMID.", skipped)
+        return records
 
     def _parse_article(self, article: element_tree.Element, topics: tuple[str, ...]) -> Publication:
         identifier = self._text(article, ".//PMID")

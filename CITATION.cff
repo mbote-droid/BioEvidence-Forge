@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+type: software
+title: "BioEvidence Forge: offline-first biomedical evidence monitoring and review service"
+abstract: "A self-hosted service that continuously collects open biomedical literature from PubMed for configured research topics, stores records with full provenance in a local SQLite archive, scores relevance transparently and produces citation-complete Markdown evidence briefs for human review. Designed to fail safely, respect public API policies and run without cloud services or GPUs."
+authors:
+  - family-names: "Mbote"
+    given-names: "Samuel"
+    orcid: "https://orcid.org/0009-0003-2319-8873"
+repository-code: "https://github.com/mbote-droid/BioEvidence-Forge"
+url: "https://github.com/mbote-droid/BioEvidence-Forge"
+license: MIT
+version: "0.1.0"
+date-released: "2026-10-08"
+keywords:
+  - "biomedical literature"
+  - "PubMed"
+  - "evidence synthesis"
+  - "research monitoring"
+  - "reproducible research"
+  - "FastAPI"
