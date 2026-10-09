@@ -1,5 +1,6 @@
 # BioEvidence Forge
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23267249.svg)](https://doi.org/10.5281/zenodo.23267249)
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13-blue?logo=python&logoColor=white)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/mbote-droid/BioEvidence-Forge/actions/workflows/ci.yml/badge.svg)](https://github.com/mbote-droid/BioEvidence-Forge/actions/workflows/ci.yml)

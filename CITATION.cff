@@ -9,6 +9,7 @@ authors:
     orcid: "https://orcid.org/0009-0003-2319-8873"
 repository-code: "https://github.com/mbote-droid/BioEvidence-Forge"
 url: "https://github.com/mbote-droid/BioEvidence-Forge"
+doi: "10.5281/zenodo.23267249"
 license: MIT
 version: "0.1.0"
 date-released: "2026-10-08"
